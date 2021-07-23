@@ -1,0 +1,18 @@
+A lista do que precisamos para fazer o código funcional (sem aplicação interativa na web):
+
+- obtenção da base de dados histórica de ações; (ok)
+
+- lista do índice ibov; (ok)
+
+- algoritmo para definição das bandas de Bollinger; (ok)
+
+- algoritmo para cálculo de beta; (?)
+
+- Código para inserir os dados da API em um banco de dados;
+
+- algoritmo para verificar se a série é estacionária no período analisado;
+
+- algoritmo para verificar quais ações são correlacionadas negativamente;
+
+- algoritmo de início e finalização do trade.
+
