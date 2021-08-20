@@ -1,13 +1,20 @@
 from module import Acao, ETF
-# from datetime import date, timedelta
 import investpy
 
-# data_inicial = '16/08/2021'
-# data_final = '17/08/2021'
+
 pais = 'brazil'
-# stock = Acao('FBOK34', pais)
+eft = ETF('bova11', pais)
+acao = Acao('VALE3', pais)
+data_inicial = '01/08/2020'
+data_final = '30/08/2021'
 
-# print(stock.dados_historicos(data_inicial, data_final))
+# print('-----------')
+# print(acao.dados_historicos(data_inicial, data_final))
+# print('-----------')
+# print(eft.dados_historicos(data_inicial, data_final))
+# print('-----------')
+# print(acao.beta(eft))
+# print('-----------')
+# print(eft.beta(acao))
 
-d = investpy.search_quotes(text='bova11', products=['etfs'],countries=['brazil'], n_results=1)
-print(d)
+print(eft.bollinger_band(data_inicial,data_final))

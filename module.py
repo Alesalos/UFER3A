@@ -1,10 +1,9 @@
+import investpy, json
 import pandas as pd
 import matplotlib.pyplot as plt
-import investpy
-from datetime import date, timedelta
-import json
-import inspect
-
+from datetime import date, timedelta, datetime
+from scipy import stats
+import numpy as np
 
 class Acao:
 
@@ -25,19 +24,43 @@ class Acao:
 	#dd/mm/yyyy # interval = 'Daily, Weekly or Monthly'
 	
 	def dados_historicos(self, data_inicial, data_final, interval = 'Daily'):
-		print(f'dados do ticker: {self.ticker}')
+		print(f'carregando dados historicos do ticker: {self.ticker}')
 		return investpy.stocks.get_stock_historical_data(self.ticker, self.pais ,data_inicial, data_final, as_json = False, order = 'descending', interval=interval)
 	
 	# Retornar o Beta Atualizado de um espaço de tempo definido, padrão 5 meses
-	def beta(self, referencia,data_inicial = _data_5_meses(), data_final = _data_hoje(), interval = 'Monthly'):
+	def beta(self, referencia, data_inicial = _data_5_meses(), data_final = _data_hoje(), interval = 'Monthly'):
 		dados_acao = self.dados_historicos(data_inicial = data_inicial, data_final = data_final)
+		dados_referencia = referencia.dados_historicos(data_inicial = data_inicial, data_final = data_final)
+		dados_acao = dados_acao['Close'].pct_change().dropna().values
+		dados_referencia = dados_referencia['Close'].pct_change().dropna().values
+		df = pd.DataFrame()
+		df['dados_acao'] = dados_acao
+		df['dados_referencia'] = dados_referencia
+		beta, alpha, r, p, std_err = stats.linregress(df['dados_referencia'], df['dados_acao'])
+		return 'beta: {}'.format(beta)
+
+	def bollinger_band(self, data_inicial, data_final):
+		dados_acao = self.dados_historicos(data_inicial = data_inicial, data_final = data_final)
+		data_inicial = datetime.strptime(data_inicial, "%d/%m/%Y")
+		data_final = datetime.strptime(data_final, "%d/%m/%Y")
+		dias_passados = data_final - data_inicial
+		dias_passados = dias_passados.days
+		bollinger_df = pd.DataFrame()		
+		bollinger_df['Preço Fehamento'] = dados_acao['Close']
+		bollinger_df['Média movel'] = dados_acao['Close'].rolling(dias_passados, min_periods = 1).mean()
+		bollinger_df['Desvio padrão'] = dados_acao['Close'].rolling(dias_passados, min_periods = 1).std()
+		bollinger_df['Banda superior'] = bollinger_df['Média movel'] + (bollinger_df['Desvio padrão'] * 2)
+		bollinger_df['Banda inferior'] = bollinger_df['Média movel'] - (bollinger_df['Desvio padrão'] * 2)
+		del bollinger_df['Desvio padrão']
+		ax = bollinger_df.plot()
+		ax.set_xlabel('Data')
+		ax.set_ylabel('Preço')
+		plt.grid()
+		plt.show()
+		return bollinger_df
 
 
-	def bollinger_band(self):
-		pass
-
-
-class ETF:
+class ETF(Acao):
 
 	def __init__(self, ticker, pais):
 		self.ticker = ticker
@@ -50,10 +73,9 @@ class ETF:
 		return dados_nome['name']
 
 	def dados_historicos(self, data_inicial, data_final, interval = 'Daily'):
-		print(f'dados historicos do ETF: {self.ticker}')
-
-		return investpy.etfs.get_etf_historical_data(self._encontrar_etf(), self.pais, data_inicial, data_final, stock_exchange=None, as_json=False, order='descending', interval=interval)
-
+		print(f'carregando dados historicos do ETF: {self.ticker}')
+		return investpy.etfs.get_etf_historical_data(self._encontrar_etf(), self.pais, data_inicial, data_final, 
+										stock_exchange=None, as_json=False, order='descending', interval=interval)
 
 class Indicadores:
 	def __init__(self):
@@ -66,16 +88,6 @@ class Cripto:
 
 
 
-pais = 'brazil'
-# stock1 = ETF('Ishares Ibovespa', pais)
-# stock2 = Acao('FLRY3', pais)
-# print(stock1.dados_historicos( Acao._data_5_meses(), Acao._data_hoje()))
-# print(stock2.beta(stock1))
-
-a = ETF('bova11', pais)
-print('-----------')
-print(a.dados_historicos('10/08/2021','18/08/2021'))
-print('-----------')
 
 # ---- TODO ----  
 # Confirmar se terá de funcionar sempre online( fazendo pedidos de api pelo investpy ou alphavantage )
