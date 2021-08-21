@@ -1,12 +1,18 @@
 from module import Acao, ETF
 import investpy
+import mplfinance as mpf
+import pandas as pd
 
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', None)
+pd.set_option('display.max_colwidth', None)
 
-pais = 'brazil'
+pais = 'United States'
 eft = ETF('bova11', pais)
-acao = Acao('VALE3', pais)
-data_inicial = '01/01/2000'
-data_final = '20/08/2021'
+acao = Acao('TSLA', pais)
+data_inicial = '01/01/2020'
+data_final = '21/08/2021'
 
 # print('-----------')
 # print(acao.dados_historicos(data_inicial, data_final))
@@ -17,4 +23,4 @@ data_final = '20/08/2021'
 # print('-----------')
 # print(eft.beta(acao))
 
-print(acao.bollinger_band(data_inicial,data_final, sigma = 10))
+acao.bollinger_band(data_inicial,data_final, janela = 20 ,sigma = 2)
