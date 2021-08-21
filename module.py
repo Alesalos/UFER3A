@@ -39,7 +39,7 @@ class Acao:
 		beta, alpha, r, p, std_err = stats.linregress(df['dados_referencia'], df['dados_acao'])
 		return 'beta: {}'.format(beta)
 
-	def bollinger_band(self, data_inicial, data_final):
+	def bollinger_band(self, data_inicial, data_final, sigma = 2):
 		dados_acao = self.dados_historicos(data_inicial = data_inicial, data_final = data_final)
 		data_inicial = datetime.strptime(data_inicial, "%d/%m/%Y")
 		data_final = datetime.strptime(data_final, "%d/%m/%Y")
@@ -49,8 +49,8 @@ class Acao:
 		bollinger_df['Preço Fehamento'] = dados_acao['Close']
 		bollinger_df['Média movel'] = dados_acao['Close'].rolling(dias_passados, min_periods = 1).mean()
 		bollinger_df['Desvio padrão'] = dados_acao['Close'].rolling(dias_passados, min_periods = 1).std()
-		bollinger_df['Banda superior'] = bollinger_df['Média movel'] + (bollinger_df['Desvio padrão'] * 2)
-		bollinger_df['Banda inferior'] = bollinger_df['Média movel'] - (bollinger_df['Desvio padrão'] * 2)
+		bollinger_df['Banda superior'] = bollinger_df['Média movel'] + (bollinger_df['Desvio padrão'] * sigma)
+		bollinger_df['Banda inferior'] = bollinger_df['Média movel'] - (bollinger_df['Desvio padrão'] * sigma)
 		del bollinger_df['Desvio padrão']
 		ax = bollinger_df.plot()
 		ax.set_xlabel('Data')
