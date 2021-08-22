@@ -5,6 +5,9 @@ import matplotlib.dates as mpdates
 from datetime import date, timedelta, datetime
 from scipy import stats
 import numpy as np
+import yfinance as yf
+import seaborn as sns
+from functools import reduce
 
 class Processaento:
 
@@ -19,13 +22,14 @@ class Processaento:
 
 		# Retornar o Beta Atualizado de um espaço de tempo definido, padrão 5 meses
 	def beta(self, referencia, data_inicial = _data_5_meses(), data_final = _data_hoje(), interval = 'Monthly'):
-		dados_acao = self.dados_historicos(data_inicial = data_inicial, data_final = data_final)
-		dados_referencia = referencia.dados_historicos(data_inicial = data_inicial, data_final = data_final)
-		dados_acao = dados_acao['Close'].pct_change().dropna().values
-		dados_referencia = dados_referencia['Close'].pct_change().dropna().values
+		dados_acao = self.dados_historicos(data_inicial = data_inicial, data_final = data_final, interval = interval)
+		dados_referencia = referencia.dados_historicos(data_inicial = data_inicial, data_final = data_final, interval = interval)
+		dados_acao = dados_acao['Close'].pct_change().values
+		dados_referencia = dados_referencia['Close'].pct_change().values
 		df = pd.DataFrame()
 		df['dados_acao'] = dados_acao
 		df['dados_referencia'] = dados_referencia
+		df = df.dropna()
 		beta, alpha, r, p, std_err = stats.linregress(df['dados_referencia'], df['dados_acao'])
 		return 'beta: {}'.format(beta)
 
@@ -52,6 +56,13 @@ class Processaento:
 		plt.grid()
 		plt.show()
 		return bollinger_df
+	#recebe uma lista e faz correlação
+	def correlacao(lista):
+		df = pd.DataFrame()
+		for acao in lista:
+			df[acao] = acao['Close']
+
+		return df
 
 
 class Acao(Processaento):
@@ -64,7 +75,6 @@ class Acao(Processaento):
 	#dd/mm/yyyy # interval = 'Daily, Weekly or Monthly'
 	
 	def dados_historicos(self, data_inicial, data_final, interval = 'Daily'):
-		print(f'carregando dados historicos do ticker: {self.ticker}')
 		return investpy.stocks.get_stock_historical_data(self.ticker, self.pais ,data_inicial, data_final, as_json = False, order = 'ascending', interval=interval)
 	
 
@@ -77,13 +87,11 @@ class ETF(Processaento):
 		self.pais = pais
 
 	def _encontrar_etf(self):
-		#print(f'Resultado de Busca por : {self.ticker}')
 		dados_nome = investpy.search_quotes(text = self.ticker, products = ['etfs'], countries = [self.pais], n_results=1)
 		dados_nome = json.loads(dados_nome.__str__())
 		return dados_nome['name']
 
 	def dados_historicos(self, data_inicial, data_final, interval = 'Daily'):
-		print(f'carregando dados historicos do ETF: {self.ticker}')
 		return investpy.etfs.get_etf_historical_data(self._encontrar_etf(), self.pais, data_inicial, data_final, 
 										stock_exchange=None, as_json=False, order='descending', interval=interval)
 
