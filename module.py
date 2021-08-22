@@ -9,21 +9,21 @@ import yfinance as yf
 import seaborn as sns
 from functools import reduce
 
-class Processaento:
+class Processamento:
 
 	def _data_hoje():
 		_data_hoje = date.today()
 		return _data_hoje.strftime("%d/%m/%Y")
 
-	def _data_5_meses():
+	def _data_1_mes():
 		data_hj = date.today()
-		_data_5_meses = data_hj - timedelta(days = 153)
-		return _data_5_meses.strftime("%d/%m/%Y")
+		_data_1_mes = data_hj - timedelta(days = 30)
+		return _data_1_mes.strftime("%d/%m/%Y")
 
 		# Retornar o Beta Atualizado de um espaço de tempo definido, padrão 5 meses
-	def beta(self, referencia, data_inicial = _data_5_meses(), data_final = _data_hoje(), interval = 'Monthly'):
-		dados_acao = self.dados_historicos(data_inicial = data_inicial, data_final = data_final, interval = interval)
-		dados_referencia = referencia.dados_historicos(data_inicial = data_inicial, data_final = data_final, interval = interval)
+	def beta(self, referencia, data_inicial = _data_1_mes(), data_final = _data_hoje(), interval = 'Monthly'):
+		dados_acao = self.dados(data_inicial = data_inicial, data_final = data_final, interval = interval)
+		dados_referencia = referencia.dados(data_inicial = data_inicial, data_final = data_final, interval = interval)
 		dados_acao = dados_acao['Close'].pct_change().values
 		dados_referencia = dados_referencia['Close'].pct_change().values
 		df = pd.DataFrame()
@@ -33,8 +33,8 @@ class Processaento:
 		beta, alpha, r, p, std_err = stats.linregress(df['dados_referencia'], df['dados_acao'])
 		return 'beta: {}'.format(beta)
 
-	def bollinger_band(self, data_inicial, data_final, janela = 20 ,sigma = 2):
-		dados_acao = self.dados_historicos(data_inicial = data_inicial, data_final = data_final)
+	def bollinger_df(self, data_inicial, data_final, janela = 20, sigma = 2):
+		dados_acao = self.dados(data_inicial = data_inicial, data_final = data_final)
 		data_inicial = datetime.strptime(data_inicial, "%d/%m/%Y")
 		data_final = datetime.strptime(data_final, "%d/%m/%Y")
 		dias_passados = data_final - data_inicial
@@ -48,6 +48,10 @@ class Processaento:
 		#bollinger_df = bollinger_df.dropna()
 		del bollinger_df['Desvio padrão']
 		bollinger_df.index = pd.to_datetime(bollinger_df.index)
+		return bollinger_df
+
+	def plot_bollinger_band(self, data_inicial, data_final, janela = 20 ,sigma = 2):
+		bollinger_df = self.bollinger_df(data_inicial, data_final, janela, sigma)
 		bollinger_df['Preço Fehamento'].plot(label = 'Preço Fehamento')
 		bollinger_df['Média movel'].plot(label = 'Média movel')
 		bollinger_df['Banda inferior'].plot(label = 'Banda inferior')
@@ -55,7 +59,7 @@ class Processaento:
 		plt.title("Banda de Bollinger para {}".format(self.ticker))
 		plt.grid()
 		plt.show()
-		return bollinger_df
+
 	#recebe uma lista e faz correlação
 	def correlacao(lista):
 		df = pd.DataFrame()
@@ -65,7 +69,7 @@ class Processaento:
 		return df
 
 
-class Acao(Processaento):
+class Acao(Processamento):
 
 	def __init__(self, ticker, pais):
 		self.ticker = ticker
@@ -74,13 +78,13 @@ class Acao(Processaento):
 	# Criado como redundancia para funcionar como metodo do objeto Acao
 	#dd/mm/yyyy # interval = 'Daily, Weekly or Monthly'
 	
-	def dados_historicos(self, data_inicial, data_final, interval = 'Daily'):
+	def dados(self, data_inicial = Processamento._data_1_mes(), data_final = Processamento._data_hoje(), interval = 'Daily'):
 		return investpy.stocks.get_stock_historical_data(self.ticker, self.pais ,data_inicial, data_final, as_json = False, order = 'ascending', interval=interval)
 	
 
 
 
-class ETF(Processaento):
+class ETF(Processamento):
 
 	def __init__(self, ticker, pais):
 		self.ticker = ticker
@@ -91,7 +95,7 @@ class ETF(Processaento):
 		dados_nome = json.loads(dados_nome.__str__())
 		return dados_nome['name']
 
-	def dados_historicos(self, data_inicial, data_final, interval = 'Daily'):
+	def dados(self, data_inicial, data_final, interval = 'Daily'):
 		return investpy.etfs.get_etf_historical_data(self._encontrar_etf(), self.pais, data_inicial, data_final, 
 										stock_exchange=None, as_json=False, order='descending', interval=interval)
 
