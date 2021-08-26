@@ -21,7 +21,7 @@ class Processamento:
 		return _data_1_mes.strftime("%d/%m/%Y")
 
 		# Retornar o Beta Atualizado de um espaço de tempo definido, padrão 5 meses
-	def beta(self, referencia, data_inicial = _data_1_mes(), data_final = _data_hoje(), interval = 'Monthly'):
+	def beta(self, referencia, data_inicial = _data_1_mes(), data_final = _data_hoje(), interval = 'Monthly', plot = False):
 		dados_acao = self.dados(data_inicial = data_inicial, data_final = data_final, interval = interval)
 		dados_referencia = referencia.dados(data_inicial = data_inicial, data_final = data_final, interval = interval)
 		dados_acao = dados_acao['Close'].pct_change().values
@@ -31,7 +31,19 @@ class Processamento:
 		df['dados_referencia'] = dados_referencia
 		df = df.dropna()
 		beta, alpha, r, p, std_err = stats.linregress(df['dados_referencia'], df['dados_acao'])
-		return 'beta: {}'.format(beta)
+
+		if plot:
+			x = np.linspace(np.amin(df['dados_acao']),np.amax(df['dados_referencia']))
+			y = beta * x + alpha
+			plt.plot(dados_acao, dados_referencia, 'b.', alpha = 0.2)
+			plt.plot(x, y, 'k')
+			plt.grid()
+			plt.title(f'{self.ticker} VS {referencia.ticker}')
+			plt.xlabel(f'{referencia.ticker}')
+			plt.ylabel(f'{self.ticker}')
+			plt.show()
+
+		return beta
 
 	def bollinger_df(self, data_inicial, data_final, janela = 20, sigma = 2):
 		dados_acao = self.dados(data_inicial = data_inicial, data_final = data_final)
@@ -107,6 +119,8 @@ class Cripto:
 	def __init__(self):
 		pass
 
+# receber uma lista com ações e calcular indicadores de performance(otimização,risco retorno, matriz de covariancia, plotagem historica de performance, etc)
+class Carteira:
 
 
 
